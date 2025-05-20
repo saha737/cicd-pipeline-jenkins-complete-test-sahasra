@@ -1,12 +1,13 @@
 plugins {
     id "com.github.node-gradle.node" version "7.0.2"
+    id 'base'
 }
 
 node {
-    download = false  // use system-installed Node & npm
+    download = false  // Use system-installed node/npm
 }
 
-task clean(type: Delete) {
+clean {
     delete fileTree(dir: '.', include: ['dist/**', 'node_modules/**'])
 }
 
@@ -24,7 +25,6 @@ task zip(type: Zip) {
     archiveBaseName.set("trainSchedule")
 }
 
-// Use the built-in plugin tasks for npm:
 tasks.build.dependsOn zip
 zip.dependsOn tasks.npm_run_build
 tasks.npm_run_build.dependsOn tasks.npm_run_test
