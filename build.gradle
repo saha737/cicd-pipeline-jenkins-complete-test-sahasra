@@ -1,24 +1,9 @@
 plugins {
-    // Include the nodeJS plugin to execute nodejs and npm tasks
     id "com.github.node-gradle.node" version "7.0.2"
 }
 
 node {
-    download = false  // Use system-installed node and npm
-}
-
-task npmInstall(type: Exec) {
-    commandLine 'npm', 'install'
-}
-
-task npm_test(type: Exec) {
-    dependsOn npmInstall
-    commandLine 'npm', 'test'
-}
-
-task npm_build(type: Exec) {
-    dependsOn npm_test
-    commandLine 'npm', 'run', 'build'
+    download = false  // use system-installed Node & npm
 }
 
 task clean(type: Delete) {
@@ -39,5 +24,8 @@ task zip(type: Zip) {
     archiveBaseName.set("trainSchedule")
 }
 
+// Use the built-in plugin tasks for npm:
 tasks.build.dependsOn zip
-zip.dependsOn npm_build
+zip.dependsOn tasks.npm_run_build
+tasks.npm_run_build.dependsOn tasks.npm_run_test
+tasks.npm_run_test.dependsOn tasks.npmInstall
