@@ -7,11 +7,11 @@ plugins {
 
 
 node {
-    
-    version = '16.14.0'         // Node.js version to install
-    npmVersion = '8.3.1'        // NPM version to install
-    download = true             // Download Node/NPM rather than using system version
+    version = '18.18.2'         // stable Node.js version
+    npmVersion = '9.8.1'        // compatible NPM version
+    download = true
 }
+
 
 
 //declare a build task
