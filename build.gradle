@@ -3,10 +3,11 @@ plugins {
 }
 
 node {
-    version = '18.18.2'         // Newer stable Node.js version
-    npmVersion = '9.9.0'        // Compatible and stable NPM
+    version = '18.18.2'
+    npmVersion = '10.5.0'  // Newer, stable, and compatible
     download = true
 }
+
 
 // declare a build task
 task build
