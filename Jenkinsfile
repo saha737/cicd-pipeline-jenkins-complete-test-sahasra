@@ -61,7 +61,7 @@ pipeline {
             }
             steps {
                 kubernetesDeploy(
-                    kubeconfigId: 'aws eks access secret',
+                    kubeconfigId: '88713a6b-b46a-4316-b516-1fd85a439d66',
                     configs: 'train-schedule-kube-canary.yml',
                     enableConfigSubstitution: true
                 )
