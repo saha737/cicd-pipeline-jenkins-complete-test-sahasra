@@ -3,16 +3,30 @@ plugins {
 }
 
 node {
-    version = '16.14.0'         // Node.js version to install
-    npmVersion = '8.3.1'        // NPM version to install
+    version = '16.14.0'   // Node.js version to install
+    npmVersion = '8.3.1'  // NPM version to install
     download = true
-
 }
 
+// Run npm install (plugin provides this task)
+task npmInstall(type: com.github.gradle.node.npm.task.NpmInstallTask)
 
+// Run npm test (assuming you have a test script in package.json)
+task npmTest(type: com.github.gradle.node.npm.task.NpmTask) {
+    args = ['run', 'test']
+}
+npmTest.dependsOn npmInstall
+
+// Run npm build (assuming you have a build script in package.json)
+task npmBuild(type: com.github.gradle.node.npm.task.NpmTask) {
+    args = ['run', 'build']
+}
+npmBuild.dependsOn npmTest
 
 // declare a build task
-task build
+task build {
+    dependsOn zip
+}
 
 task zip(type: Zip) {
     from ('.') {
@@ -27,9 +41,4 @@ task zip(type: Zip) {
     destinationDirectory = file('dist')
     archiveBaseName.set("trainSchedule")
 }
-
-build.dependsOn zip
-zip.dependsOn npm_build
-npm_build.dependsOn npm_test
-npm_test.dependsOn npmInstall
-npm_build.dependsOn npmInstall
+zip.dependsOn npmBuild
