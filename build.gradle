@@ -1,36 +1,30 @@
 plugins {
-  //inlude the nodeJS plugin to execute nodejs and npm tasks
-  id "com.github.node-gradle.node" version "7.0.2"
-
+    id "com.github.node-gradle.node" version "7.0.2"
 }
-
 
 node {
-    version = '16.14.0'         // Node.js version to install
-    npmVersion = '8.3.1'        // NPM version to install
-    download = true             // Download Node/NPM rather than using system version
+    version = '18.18.2'         // Newer stable Node.js version
+    npmVersion = '9.9.0'        // Compatible and stable NPM
+    download = true
 }
 
-
-//declare a build task
+// declare a build task
 task build
 
-//declare a task to create a zip of the app
 task zip(type: Zip) {
-	from ('.') {
-		include "*"
-		include "bin/**"
-		include "data/**"
-		include "node_modules/**"
-		include "public/**"
-		include "routes/**"
-		include "views/**"
-	}
-	destinationDirectory = file('dist')
-	archiveBaseName.set("trainSchedule")
+    from ('.') {
+        include "*"
+        include "bin/**"
+        include "data/**"
+        include "node_modules/**"
+        include "public/**"
+        include "routes/**"
+        include "views/**"
+    }
+    destinationDirectory = file('dist')
+    archiveBaseName.set("trainSchedule")
 }
 
-//declare task dependencies
 build.dependsOn zip
 zip.dependsOn npm_build
 npm_build.dependsOn npm_test
