@@ -29,12 +29,16 @@ pipeline {
                 }
             }
         }
+        stage('Debug Branch') {
+    steps {
+        echo "BRANCH_NAME is: ${env.BRANCH_NAME}"
+    }
+}
         stage('Push Docker Image') {
             when {
-                anyOf {
-                    branch 'master'
-                    branch 'main'
-                }
+                 expression {
+        return env.GIT_BRANCH?.endsWith('master') || env.GIT_BRANCH?.endsWith('main')
+    }
             }
 
             steps {
@@ -48,10 +52,9 @@ pipeline {
         }
         stage('CanaryDeploy') {
             when {
-                anyOf {
-                    branch 'master'
-                    branch 'main'
-                }
+                 expression {
+        return env.GIT_BRANCH?.endsWith('master') || env.GIT_BRANCH?.endsWith('main')
+    }
             }
 
             environment { 
@@ -67,10 +70,9 @@ pipeline {
         }
         stage('DeployToProduction') {
             when {
-            anyOf {
-                branch 'master'
-                branch 'main'
-            }
+             expression {
+        return env.GIT_BRANCH?.endsWith('master') || env.GIT_BRANCH?.endsWith('main')
+    }
         }
 
             environment { 
