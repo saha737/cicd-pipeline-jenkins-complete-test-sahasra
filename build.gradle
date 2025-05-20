@@ -16,6 +16,9 @@ node {
 
 //declare a build task
 task build
+task clean(type: Delete) {
+    delete fileTree(dir: '.', include: ['dist/**', 'node_modules/**'])
+}
 
 //declare a task to create a zip of the app
 task zip(type: Zip) {
