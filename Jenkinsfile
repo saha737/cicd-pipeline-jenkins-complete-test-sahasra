@@ -14,10 +14,9 @@ pipeline {
         }
         stage('Build Docker Image') {
             when {
-                anyOf {
-                    branch 'master'
-                    branch 'main'
-                }
+               expression {
+        return env.GIT_BRANCH?.endsWith('master') || env.GIT_BRANCH?.endsWith('main')
+    }
             }
 
             steps {
@@ -31,7 +30,7 @@ pipeline {
         }
         stage('Debug Branch') {
     steps {
-        echo "BRANCH_NAME is: ${env.BRANCH_NAME}"
+        echo "GIT_BRANCH: ${env.GIT_BRANCH}"
     }
 }
         stage('Push Docker Image') {
@@ -43,7 +42,7 @@ pipeline {
 
             steps {
                 script {
-                    docker.withRegistry('https://registry.hub.docker.com', 'dockerhub') {
+                    docker.withRegistry('https://registry.hub.docker.com', '17167163-b09e-4b3a-a9ea-f08bee525e5b') {
                         app.push("${env.BUILD_NUMBER}")
                         app.push("latest")
                     }
