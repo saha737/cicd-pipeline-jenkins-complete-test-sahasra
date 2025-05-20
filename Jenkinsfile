@@ -2,7 +2,7 @@ pipeline {
     agent any
     environment {
         //be sure to replace "bhavukm" with your own Docker Hub username
-        DOCKER_IMAGE_NAME = "bhavukm/train-schedule"
+        DOCKER_IMAGE_NAME = "5460/train-schedule"
     }
     stages {
         stage('Build') {
@@ -31,7 +31,7 @@ pipeline {
             }
             steps {
                 script {
-                    docker.withRegistry('https://registry.hub.docker.com', 'docker_hub_login') {
+                    docker.withRegistry('https://registry.hub.docker.com', 'dockerhub') {
                         app.push("${env.BUILD_NUMBER}")
                         app.push("latest")
                     }
@@ -47,7 +47,7 @@ pipeline {
             }
             steps {
                 kubernetesDeploy(
-                    kubeconfigId: 'kubeconfig',
+                    kubeconfigId: 'aws eks access secret',
                     configs: 'train-schedule-kube-canary.yml',
                     enableConfigSubstitution: true
                 )
