@@ -7,9 +7,8 @@ plugins {
 
 
 node {
-    version = '18.20.8'         // Update to the installed Node.js version
-    npmVersion = '9.9.4'        // Update to the installed npm version
-    download = true             // Downloads Node and npm for the build (optional if using system-installed versions)
+            // Update to the installed npm version
+    download = false            // Downloads Node and npm for the build (optional if using system-installed versions)
 }
 
 
