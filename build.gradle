@@ -1,44 +1,39 @@
 plugins {
-    id "com.github.node-gradle.node" version "7.0.2"
+//inlude the nodeJS plugin to execute nodejs and npm tasks
+  
+  id "com.github.node-gradle.node" version "7.0.2"
+
 }
+
 
 node {
-    version = '16.14.0'   // Node.js version to install
-    npmVersion = '8.3.1'  // NPM version to install
-    download = true
+    
+    version = '16.14.0'         // Node.js version to install
+    npmVersion = '8.3.1'        // NPM version to install
+    download = true             // Download Node/NPM rather than using system version
 }
 
-// Run npm install (plugin provides this task)
-task npmInstall(type: com.github.gradle.node.npm.task.NpmInstallTask)
 
-// Run npm test (assuming you have a test script in package.json)
-task npmTest(type: com.github.gradle.node.npm.task.NpmTask) {
-    args = ['run', 'test']
-}
-npmTest.dependsOn npmInstall
+//declare a build task
+task build
 
-// Run npm build (assuming you have a build script in package.json)
-task npmBuild(type: com.github.gradle.node.npm.task.NpmTask) {
-    args = ['run', 'build']
-}
-npmBuild.dependsOn npmTest
-
-// declare a build task
-task build {
-    dependsOn zip
-}
-
+//declare a task to create a zip of the app
 task zip(type: Zip) {
-    from ('.') {
-        include "*"
-        include "bin/**"
-        include "data/**"
-        include "node_modules/**"
-        include "public/**"
-        include "routes/**"
-        include "views/**"
-    }
-    destinationDirectory = file('dist')
-    archiveBaseName.set("trainSchedule")
+from ('.') {
+include "*"
+include "bin/**"
+include "data/**"
+include "node_modules/**"
+include "public/**"
+include "routes/**"
+include "views/**"
 }
-zip.dependsOn npmBuild
+destinationDirectory = file('dist')
+archiveBaseName.set("trainSchedule")
+}
+
+//declare task dependencies
+build.dependsOn zip
+zip.dependsOn npm_build
+npm_build.dependsOn npm_test
+npm_test.dependsOn npmInstall
