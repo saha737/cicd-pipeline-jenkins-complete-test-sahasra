@@ -14,8 +14,12 @@ pipeline {
         }
         stage('Build Docker Image') {
             when {
-                branch 'master'
+                anyOf {
+                    branch 'master'
+                    branch 'main'
+                }
             }
+
             steps {
                 script {
                     app = docker.build(DOCKER_IMAGE_NAME)
@@ -27,8 +31,12 @@ pipeline {
         }
         stage('Push Docker Image') {
             when {
-                branch 'master'
+                anyOf {
+                    branch 'master'
+                    branch 'main'
+                }
             }
+
             steps {
                 script {
                     docker.withRegistry('https://registry.hub.docker.com', 'dockerhub') {
@@ -40,8 +48,12 @@ pipeline {
         }
         stage('CanaryDeploy') {
             when {
-                branch 'master'
+                anyOf {
+                    branch 'master'
+                    branch 'main'
+                }
             }
+
             environment { 
                 CANARY_REPLICAS = 1
             }
@@ -55,8 +67,12 @@ pipeline {
         }
         stage('DeployToProduction') {
             when {
+            anyOf {
                 branch 'master'
+                branch 'main'
             }
+        }
+
             environment { 
                 CANARY_REPLICAS = 0
             }

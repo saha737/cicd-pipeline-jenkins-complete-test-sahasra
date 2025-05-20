@@ -6,10 +6,11 @@ plugins {
 
 
 node {
-    version = '16.14.0'         // Node.js version to install
-    npmVersion = '8.3.1'        // NPM version to install
-    download = true             // Download Node/NPM rather than using system version
+    version = '16.14.0'
+    npmVersion = '8.5.0' // or even 9.x if compatible with your build
+    download = true
 }
+
 
 
 //declare a build task
