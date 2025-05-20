@@ -60,12 +60,17 @@ pipeline {
                 CANARY_REPLICAS = 1
             }
             steps {
+        script {
+            catchError(buildResult: 'FAILURE', stageResult: 'FAILURE') {
                 kubernetesDeploy(
                     kubeconfigId: '88713a6b-b46a-4316-b516-1fd85a439d66',
                     configs: 'train-schedule-kube-canary.yml',
                     enableConfigSubstitution: true
                 )
             }
+        }
+    }
+}
         }
         stage('DeployToProduction') {
             when {
