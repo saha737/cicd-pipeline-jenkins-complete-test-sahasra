@@ -1,42 +1,43 @@
 plugins {
-//inlude the nodeJS plugin to execute nodejs and npm tasks
-  
-  id "com.github.node-gradle.node" version "7.0.2"
-
+    // Include the nodeJS plugin to execute nodejs and npm tasks
+    id "com.github.node-gradle.node" version "7.0.2"
 }
-
 
 node {
-            // Update to the installed npm version
-    download = false            // Downloads Node and npm for the build (optional if using system-installed versions)
+    download = false  // Use system-installed node and npm
 }
 
+task npmInstall(type: Exec) {
+    commandLine 'npm', 'install'
+}
 
+task npm_test(type: Exec) {
+    dependsOn npmInstall
+    commandLine 'npm', 'test'
+}
 
+task npm_build(type: Exec) {
+    dependsOn npm_test
+    commandLine 'npm', 'run', 'build'
+}
 
-//declare a build task
-task build
 task clean(type: Delete) {
     delete fileTree(dir: '.', include: ['dist/**', 'node_modules/**'])
 }
 
-//declare a task to create a zip of the app
 task zip(type: Zip) {
-from ('.') {
-include "*"
-include "bin/**"
-include "data/**"
-include "node_modules/**"
-include "public/**"
-include "routes/**"
-include "views/**"
-}
-destinationDirectory = file('dist')
-archiveBaseName.set("trainSchedule")
+    from('.') {
+        include "*"
+        include "bin/**"
+        include "data/**"
+        include "node_modules/**"
+        include "public/**"
+        include "routes/**"
+        include "views/**"
+    }
+    destinationDirectory = file('dist')
+    archiveBaseName.set("trainSchedule")
 }
 
-//declare task dependencies
-build.dependsOn zip
+tasks.build.dependsOn zip
 zip.dependsOn npm_build
-npm_build.dependsOn npm_test
-npm_test.dependsOn npmInstall
