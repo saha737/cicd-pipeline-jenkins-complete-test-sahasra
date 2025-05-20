@@ -3,10 +3,12 @@ plugins {
 }
 
 node {
-    version = '18.18.2'
-    npmVersion = '10.5.0'  // Newer, stable, and compatible
+    version = '16.14.0'
+    npmVersion = '8.5.0' // or even 9.x if compatible with your build
     download = true
+
 }
+
 
 
 // declare a build task
