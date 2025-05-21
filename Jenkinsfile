@@ -79,28 +79,29 @@ pipeline {
             return env.GIT_BRANCH?.endsWith('master') || env.GIT_BRANCH?.endsWith('main')
         }
     }
+
     environment {
         CANARY_REPLICAS = 0
     }
+
     steps {
         input 'Deploy to Production?'
         milestone(1)
-       
-           script {
-    docker.image('bitnami/kubectl:latest').inside('--entrypoint=""') {
-        sh '''
-            echo "$KUBECONFIG_CONTENT" > ~/.kube/config
 
-            sed -i "s|REPLACE_IMAGE|5460/train-schedule:${BUILD_NUMBER}|g" prod-canary-updated.yml
-            sed -i "s|REPLACE_IMAGE|5460/train-schedule:${BUILD_NUMBER}|g" prod-updated.yml
+        script {
+            sh """
+                sed 's|\\\${DOCKER_IMAGE_NAME}|${DOCKER_IMAGE_NAME}|g; s|\\\${BUILD_NUMBER}|${BUILD_NUMBER}|g' train-schedule-kube.yml > prod-updated.yml
+                sed 's|\\\${DOCKER_IMAGE_NAME}|${DOCKER_IMAGE_NAME}|g; s|\\\${BUILD_NUMBER}|${BUILD_NUMBER}|g' train-schedule-kube-canary.yml > prod-canary-updated.yml
+            """
 
-            kubectl apply -f prod-canary-updated.yml
-            kubectl apply -f prod-updated.yml
-        '''
-    }
-}
-
-        
+            docker.image('bitnami/kubectl:latest').inside('--entrypoint=""') {
+                sh '''
+                    echo "$KUBECONFIG_CONTENT" > ~/.kube/config
+                    kubectl apply -f prod-canary-updated.yml
+                    kubectl apply -f prod-updated.yml
+                '''
+            }
+        }
     }
 }
 
