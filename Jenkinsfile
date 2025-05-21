@@ -85,20 +85,22 @@ pipeline {
     steps {
         input 'Deploy to Production?'
         milestone(1)
-        script {
-            docker.image('bitnami/kubectl:latest').inside {
-                sh '''
-                    cp train-schedule-kube-canary.yml prod-canary-updated.yml
-                    cp train-schedule-kube.yml prod-updated.yml
+       
+           script {
+    docker.image('bitnami/kubectl:latest').inside('--entrypoint=""') {
+        sh '''
+            echo "$KUBECONFIG_CONTENT" > ~/.kube/config
 
-                    sed -i "s|REPLACE_IMAGE|5460/train-schedule:${BUILD_NUMBER}|g" prod-canary-updated.yml
-                    sed -i "s|REPLACE_IMAGE|5460/train-schedule:${BUILD_NUMBER}|g" prod-updated.yml
+            sed -i "s|REPLACE_IMAGE|5460/train-schedule:${BUILD_NUMBER}|g" prod-canary-updated.yml
+            sed -i "s|REPLACE_IMAGE|5460/train-schedule:${BUILD_NUMBER}|g" prod-updated.yml
 
-                    kubectl apply -f prod-canary-updated.yml
-                    kubectl apply -f prod-updated.yml
-                '''
-            }
-        }
+            kubectl apply -f prod-canary-updated.yml
+            kubectl apply -f prod-updated.yml
+        '''
+    }
+}
+
+        
     }
 }
 
