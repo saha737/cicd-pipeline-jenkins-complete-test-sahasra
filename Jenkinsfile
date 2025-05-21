@@ -2,7 +2,7 @@ pipeline {
     agent any
 
     environment {
-        DOCKER_IMAGE_NAME = "5460/train-schedule" // replace with your Docker Hub username if different
+        DOCKER_IMAGE_NAME = "5460/train-schedule"
     }
 
     stages {
@@ -58,20 +58,16 @@ pipeline {
                     return env.GIT_BRANCH?.endsWith('master') || env.GIT_BRANCH?.endsWith('main')
                 }
             }
-
             environment {
                 CANARY_REPLICAS = 1
             }
-
             steps {
                 script {
-                    catchError(buildResult: 'FAILURE', stageResult: 'FAILURE') {
-                        def canaryManifest = readFile('train-schedule-kube-canary.yml')
-                            .replaceAll('\\$\\{DOCKER_IMAGE_NAME\\}', "${env.DOCKER_IMAGE_NAME}")
-                            .replaceAll('\\$\\{BUILD_NUMBER\\}', "${env.BUILD_NUMBER}")
-                        writeFile file: 'canary-updated.yml', text: canaryManifest
-                        
-                        sh 'kubectl apply -f canary-updated.yml'
+                    docker.image('bitnami/kubectl:latest').inside {
+                        sh '''
+                            sed -i "s|REPLACE_IMAGE|5460/train-schedule:${BUILD_NUMBER}|g" train-schedule-kube-canary.yml > prod-canary-updated.yml
+                            kubectl apply -f prod-canary-updated.yml
+                        '''
                     }
                 }
             }
@@ -83,28 +79,21 @@ pipeline {
                     return env.GIT_BRANCH?.endsWith('master') || env.GIT_BRANCH?.endsWith('main')
                 }
             }
-
             environment {
                 CANARY_REPLICAS = 0
             }
-
             steps {
                 input 'Deploy to Production?'
                 milestone(1)
-
                 script {
-                    def prodCanaryManifest = readFile('train-schedule-kube-canary.yml')
-                        .replaceAll('\\$\\{DOCKER_IMAGE_NAME\\}', "${env.DOCKER_IMAGE_NAME}")
-                        .replaceAll('\\$\\{BUILD_NUMBER\\}', "${env.BUILD_NUMBER}")
-                    writeFile file: 'prod-canary-updated.yml', text: prodCanaryManifest
-
-                    def prodManifest = readFile('train-schedule-kube.yml')
-                        .replaceAll('\\$\\{DOCKER_IMAGE_NAME\\}', "${env.DOCKER_IMAGE_NAME}")
-                        .replaceAll('\\$\\{BUILD_NUMBER\\}', "${env.BUILD_NUMBER}")
-                    writeFile file: 'prod-updated.yml', text: prodManifest
-
-                    sh 'kubectl apply -f prod-canary-updated.yml'
-                    sh 'kubectl apply -f prod-updated.yml'
+                    docker.image('bitnami/kubectl:latest').inside {
+                        sh '''
+                            sed -i "s|REPLACE_IMAGE|5460/train-schedule:${BUILD_NUMBER}|g" train-schedule-kube-canary.yml > prod-canary-updated.yml
+                            sed -i "s|REPLACE_IMAGE|5460/train-schedule:${BUILD_NUMBER}|g" train-schedule-kube.yml > prod-updated.yml
+                            kubectl apply -f prod-canary-updated.yml
+                            kubectl apply -f prod-updated.yml
+                        '''
+                    }
                 }
             }
         }
