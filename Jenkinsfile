@@ -1,9 +1,10 @@
 pipeline {
     agent any
+
     environment {
-        //be sure to replace "bhavukm" with your own Docker Hub username
-        DOCKER_IMAGE_NAME = "5460/train-schedule"
+        DOCKER_IMAGE_NAME = "5460/train-schedule" // replace with your Docker Hub username if different
     }
+
     stages {
         stage('Build') {
             steps {
@@ -12,13 +13,13 @@ pipeline {
                 archiveArtifacts artifacts: 'dist/trainSchedule.zip'
             }
         }
+
         stage('Build Docker Image') {
             when {
-               expression {
-        return env.GIT_BRANCH?.endsWith('master') || env.GIT_BRANCH?.endsWith('main')
-    }
+                expression {
+                    return env.GIT_BRANCH?.endsWith('master') || env.GIT_BRANCH?.endsWith('main')
+                }
             }
-
             steps {
                 script {
                     app = docker.build(DOCKER_IMAGE_NAME)
@@ -28,18 +29,19 @@ pipeline {
                 }
             }
         }
+
         stage('Debug Branch') {
-    steps {
-        echo "GIT_BRANCH: ${env.GIT_BRANCH}"
-    }
-}
+            steps {
+                echo "GIT_BRANCH: ${env.GIT_BRANCH}"
+            }
+        }
+
         stage('Push Docker Image') {
             when {
-                 expression {
-        return env.GIT_BRANCH?.endsWith('master') || env.GIT_BRANCH?.endsWith('main')
-    }
+                expression {
+                    return env.GIT_BRANCH?.endsWith('master') || env.GIT_BRANCH?.endsWith('main')
+                }
             }
-
             steps {
                 script {
                     docker.withRegistry('https://registry.hub.docker.com', '17167163-b09e-4b3a-a9ea-f08bee525e5b') {
@@ -49,52 +51,61 @@ pipeline {
                 }
             }
         }
+
         stage('CanaryDeploy') {
             when {
-                 expression {
-        return env.GIT_BRANCH?.endsWith('master') || env.GIT_BRANCH?.endsWith('main')
-    }
+                expression {
+                    return env.GIT_BRANCH?.endsWith('master') || env.GIT_BRANCH?.endsWith('main')
+                }
             }
 
-            environment { 
+            environment {
                 CANARY_REPLICAS = 1
             }
+
             steps {
-        script {
-            catchError(buildResult: 'FAILURE', stageResult: 'FAILURE') {
-                kubernetesDeploy(
-                    kubeconfigId: '88713a6b-b46a-4316-b516-1fd85a439d66',
-                    configs: 'train-schedule-kube-canary.yml',
-                    enableConfigSubstitution: true
-                )
+                script {
+                    catchError(buildResult: 'FAILURE', stageResult: 'FAILURE') {
+                        def canaryManifest = readFile('train-schedule-kube-canary.yml')
+                            .replaceAll('\\$\\{DOCKER_IMAGE_NAME\\}', "${env.DOCKER_IMAGE_NAME}")
+                            .replaceAll('\\$\\{BUILD_NUMBER\\}', "${env.BUILD_NUMBER}")
+                        writeFile file: 'canary-updated.yml', text: canaryManifest
+                        
+                        sh 'kubectl apply -f canary-updated.yml'
+                    }
+                }
             }
         }
-    }
 
-        }
         stage('DeployToProduction') {
             when {
-             expression {
-        return env.GIT_BRANCH?.endsWith('master') || env.GIT_BRANCH?.endsWith('main')
-    }
-        }
+                expression {
+                    return env.GIT_BRANCH?.endsWith('master') || env.GIT_BRANCH?.endsWith('main')
+                }
+            }
 
-            environment { 
+            environment {
                 CANARY_REPLICAS = 0
             }
+
             steps {
                 input 'Deploy to Production?'
                 milestone(1)
-                kubernetesDeploy(
-                    kubeconfigId: '88713a6b-b46a-4316-b516-1fd85a439d66',
-                    configs: 'train-schedule-kube-canary.yml',
-                    enableConfigSubstitution: true
-                )
-                kubernetesDeploy(
-                    kubeconfigId: '88713a6b-b46a-4316-b516-1fd85a439d66',
-                    configs: 'train-schedule-kube.yml',
-                    enableConfigSubstitution: true
-                )
+
+                script {
+                    def prodCanaryManifest = readFile('train-schedule-kube-canary.yml')
+                        .replaceAll('\\$\\{DOCKER_IMAGE_NAME\\}', "${env.DOCKER_IMAGE_NAME}")
+                        .replaceAll('\\$\\{BUILD_NUMBER\\}', "${env.BUILD_NUMBER}")
+                    writeFile file: 'prod-canary-updated.yml', text: prodCanaryManifest
+
+                    def prodManifest = readFile('train-schedule-kube.yml')
+                        .replaceAll('\\$\\{DOCKER_IMAGE_NAME\\}', "${env.DOCKER_IMAGE_NAME}")
+                        .replaceAll('\\$\\{BUILD_NUMBER\\}', "${env.BUILD_NUMBER}")
+                    writeFile file: 'prod-updated.yml', text: prodManifest
+
+                    sh 'kubectl apply -f prod-canary-updated.yml'
+                    sh 'kubectl apply -f prod-updated.yml'
+                }
             }
         }
     }
