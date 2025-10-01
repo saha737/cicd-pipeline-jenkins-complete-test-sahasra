@@ -4,8 +4,13 @@ plugins {
 }
 
 node {
-    download = false  // Use system-installed node/npm
-}
+    // Use an LTS that matches the app (adjust if needed)
+    version = "18.20.4"
+    npmVersion = "10.7.0"
+    download = true          // <-- IMPORTANT
+    // Optionally pin npm work dir:
+    // workDir = file("${project.buildDir}/nodejs")
+    // npmWorkDir = file("${project.buildDir}/npm")}
 
 clean {
     delete fileTree(dir: '.', include: ['dist/**', 'node_modules/**'])
