@@ -11,7 +11,7 @@ node {
     // Optionally pin npm work dir:
     // workDir = file("${project.buildDir}/nodejs")
     // npmWorkDir = file("${project.buildDir}/npm")}
-
+}
 clean {
     delete fileTree(dir: '.', include: ['dist/**', 'node_modules/**'])
 }
