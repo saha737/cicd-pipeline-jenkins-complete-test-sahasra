@@ -73,7 +73,7 @@ pipeline {
             }
             steps {
                 script {
-                    docker.image('bitnami/kubectl:1.32').inside {
+                    docker.image('registry.k8s.io/kubectl:v1.32.2').inside {
                         sh '''
                             sed -i "s|REPLACE_IMAGE|sahasra13/train-schedule:${BUILD_NUMBER}|g" train-schedule-kube-canary.yml > prod-canary-updated.yml
                             kubectl apply -f prod-canary-updated.yml
@@ -104,7 +104,7 @@ pipeline {
                 sed 's|\\\${DOCKER_IMAGE_NAME}|${DOCKER_IMAGE_NAME}|g; s|\\\${BUILD_NUMBER}|${BUILD_NUMBER}|g' train-schedule-kube-canary.yml > prod-canary-updated.yml
             """
 
-            docker.image('bitnami/kubectl:1.32').inside('--entrypoint=""') {
+            docker.image('registry.k8s.io/kubectl:v1.32.2').inside('--entrypoint=""') {
                 sh '''
                     echo "$KUBECONFIG_CONTENT" > ~/.kube/config
                     kubectl apply -f prod-canary-updated.yml
