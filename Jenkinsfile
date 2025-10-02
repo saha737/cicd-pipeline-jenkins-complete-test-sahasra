@@ -7,12 +7,6 @@ pipeline {
 
     stages {
 
-        stage('Clean workspace') {
-            steps { 
-                cleanWs() 
-            }
-        }      
-
         stage('Pre-clean Node Cache') {
             steps {
                 sh '''
