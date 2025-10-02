@@ -75,7 +75,7 @@ pipeline {
                 script {
                     docker.image('bitnami/kubectl:latest').inside {
                         sh '''
-                            sed -i "s|REPLACE_IMAGE|5460/train-schedule:${BUILD_NUMBER}|g" train-schedule-kube-canary.yml > prod-canary-updated.yml
+                            sed -i "s|REPLACE_IMAGE|sahasra13/train-schedule:${BUILD_NUMBER}|g" train-schedule-kube-canary.yml > prod-canary-updated.yml
                             kubectl apply -f prod-canary-updated.yml
                         '''
                     }
