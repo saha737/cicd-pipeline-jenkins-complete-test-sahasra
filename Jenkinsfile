@@ -103,13 +103,19 @@ pipeline {
                 sed 's|\\\${DOCKER_IMAGE_NAME}|${DOCKER_IMAGE_NAME}|g; s|\\\${BUILD_NUMBER}|${BUILD_NUMBER}|g' train-schedule-kube.yml > prod-updated.yml
                 sed 's|\\\${DOCKER_IMAGE_NAME}|${DOCKER_IMAGE_NAME}|g; s|\\\${BUILD_NUMBER}|${BUILD_NUMBER}|g' train-schedule-kube-canary.yml > prod-canary-updated.yml
             """
+            withCredentials([string(credentialsId: 'kubeconfig-content', variable: 'KUBECONFIG_CONTENT')]) {    
 
-            docker.image('registry.k8s.io/kubectl:v1.32.2').inside('--entrypoint=""') {
-                sh '''
-                    echo "$KUBECONFIG_CONTENT" > ~/.kube/config
-                    kubectl apply -f prod-canary-updated.yml
-                    kubectl apply -f prod-updated.yml
-                '''
+                docker.image('registry.k8s.io/kubectl:v1.32.2').inside('--entrypoint=""') {
+                    sh '''
+                        set -e
+                        mkdir -p ~/.kube
+                        echo "$KUBECONFIG_CONTENT" > ~/.kube/config
+                        chmod 600 ~/.kube/config
+                        echo "$KUBECONFIG_CONTENT" > ~/.kube/config
+                        kubectl apply -f prod-canary-updated.yml
+                        kubectl apply -f prod-updated.yml
+                    '''
+                }
             }
         }
     }
