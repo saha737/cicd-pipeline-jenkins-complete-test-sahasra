@@ -2,10 +2,20 @@ pipeline {
     agent any
 
     environment {
-        DOCKER_IMAGE_NAME = "5460/train-schedule"
+        DOCKER_IMAGE_NAME = "sahasra13/train-schedule"
     }
 
     stages {
+        stage('Pre-clean Node Cache') {
+            steps {
+                sh '''
+                rm -rf .gradle/nodejs .gradle/npm ~/.gradle/nodejs ~/.gradle/npm
+                rm -rf node_modules
+                rm -f package-lock.json   # this project is old; lockfile can trigger npm 3/5 quirks
+                '''
+            }
+        }
+
         stage('Build') {
             steps {
                 echo 'Running build automation'
