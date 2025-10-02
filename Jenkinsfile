@@ -54,7 +54,7 @@ pipeline {
             }
             steps {
                 script {
-                    docker.withRegistry('https://registry.hub.docker.com', '17167163-b09e-4b3a-a9ea-f08bee525e5b') {
+                    docker.withRegistry('https://registry.hub.docker.com', 'dockerhub-creds') {
                         app.push("${env.BUILD_NUMBER}")
                         app.push("latest")
                     }
