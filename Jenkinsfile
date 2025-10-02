@@ -82,44 +82,40 @@ pipeline {
                 }
             }
         }
-
         stage('DeployToProduction') {
-    when {
-        expression {
-            return env.GIT_BRANCH?.endsWith('master') || env.GIT_BRANCH?.endsWith('main')
-        }
-    }
+            when {
+                anyOf { branch 'main'; branch 'master' }
+            }
+            steps {
+                input 'Deploy to Production?'
+                milestone(1)
 
-    environment {
-        CANARY_REPLICAS = 0
-    }
+                script {
+                    def branchTag = (env.BRANCH_NAME ?: env.GIT_BRANCH ?: 'master')
+                        .replaceAll('^origin/', '')
+                        .replaceAll('[^a-zA-Z0-9_.-]', '-')
 
-    steps {
-        input 'Deploy to Production?'
-        milestone(1)
+                    env.IMAGE = "${DOCKER_IMAGE_NAME}:${branchTag}-${BUILD_NUMBER}"
 
-        script {
-            sh """
-                sed 's|\\\${DOCKER_IMAGE_NAME}|${DOCKER_IMAGE_NAME}|g; s|\\\${BUILD_NUMBER}|${BUILD_NUMBER}|g' train-schedule-kube.yml > prod-updated.yml
-                sed 's|\\\${DOCKER_IMAGE_NAME}|${DOCKER_IMAGE_NAME}|g; s|\\\${BUILD_NUMBER}|${BUILD_NUMBER}|g' train-schedule-kube-canary.yml > prod-canary-updated.yml
-            """
-            withCredentials([string(credentialsId: 'kubeconfig-content', variable: 'KUBECONFIG_CONTENT')]) {    
+                    // Canary 1 replica
+                    withEnv(["IMAGE=${env.IMAGE}", "CANARY_REPLICAS=1"]) {
+                        kubernetesDeploy(
+                            kubeconfigId: 'kubeconfig',
+                            configs: 'train-schedule-kube-canary.yml',
+                            enableConfigSubstitution: true
+                        )
+                    }
 
-                docker.image('registry.k8s.io/kubectl:v1.32.2').inside('--entrypoint=""') {
-                    sh '''
-                        set -e
-                        mkdir -p ~/.kube
-                        echo "$KUBECONFIG_CONTENT" > ~/.kube/config
-                        chmod 600 ~/.kube/config
-                        echo "$KUBECONFIG_CONTENT" > ~/.kube/config
-                        kubectl apply -f prod-canary-updated.yml
-                        kubectl apply -f prod-updated.yml
-                    '''
+                    // Full prod (set your prod replicas/manifest as needed)
+                    withEnv(["IMAGE=${env.IMAGE}", "CANARY_REPLICAS=0"]) {
+                        kubernetesDeploy(
+                            kubeconfigId: 'kubeconfig',
+                            configs: 'train-schedule-kube.yml',
+                            enableConfigSubstitution: true
+                        )
+                    }
                 }
             }
         }
-    }
-}
-
     }
 }
