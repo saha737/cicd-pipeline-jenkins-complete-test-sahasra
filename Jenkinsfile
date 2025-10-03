@@ -63,26 +63,26 @@ pipeline {
             }
         }
 
-        stage('CanaryDeploy') {
-            when {
-                expression {
-                    return env.GIT_BRANCH?.endsWith('master') || env.GIT_BRANCH?.endsWith('main')
-                }
-            }
-            environment {
-                CANARY_REPLICAS = 1
-            }
-            steps {
-                script {
-                    docker.image('registry.k8s.io/kubectl:v1.32.2').inside {
-                        sh '''
-                            sed -i "s|REPLACE_IMAGE|sahasra13/train-schedule:${BUILD_NUMBER}|g" train-schedule-kube-canary.yml > prod-canary-updated.yml
-                            kubectl apply -f prod-canary-updated.yml
-                        '''
-                    }
-                }
-            }
-        }
+        // stage('CanaryDeploy') {
+        //     when {
+        //         expression {
+        //             return env.GIT_BRANCH?.endsWith('master') || env.GIT_BRANCH?.endsWith('main')
+        //         }
+        //     }
+        //     environment {
+        //         CANARY_REPLICAS = 1
+        //     }
+        //     steps {
+        //         script {
+        //             docker.image('registry.k8s.io/kubectl:v1.32.2').inside {
+        //                 sh '''
+        //                     sed -i "s|REPLACE_IMAGE|sahasra13/train-schedule:${BUILD_NUMBER}|g" train-schedule-kube-canary.yml > prod-canary-updated.yml
+        //                     kubectl apply -f prod-canary-updated.yml
+        //                 '''
+        //             }
+        //         }
+        //     }
+        // }
         stage('DeployToProduction') {
             when {
                 anyOf { branch 'main'; branch 'master' }
