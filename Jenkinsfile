@@ -85,7 +85,13 @@ pipeline {
         // }
         stage('DeployToProduction') {
             when {
-                anyOf { branch 'main'; branch 'master' }
+                expression {
+                def b1 = (env.BRANCH_NAME ?: '')
+                def b2 = (env.GIT_BRANCH ?: '')
+                return (b1 == 'master' || b1 == 'main' ||
+                        b2 == 'master' || b2 == 'main' ||
+                        b2.endsWith('/master') || b2.endsWith('/main'))
+                }
             }
             steps {
                 input 'Deploy to Production?'
