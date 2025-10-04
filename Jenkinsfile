@@ -97,27 +97,28 @@ pipeline {
                 input 'Deploy to Production?'
                 milestone(1)
                 script {
-                def branchTag = (env.BRANCH_NAME ?: env.GIT_BRANCH ?: 'master')
-                    .replaceAll('^origin/', '')
-                    .replaceAll('[^a-zA-Z0-9_.-]', '-')
-                env.IMAGE = "${DOCKER_IMAGE_NAME}:${branchTag}-${BUILD_NUMBER}"
+                    def branchTag = (env.BRANCH_NAME ?: env.GIT_BRANCH ?: 'master')
+                        .replaceAll('^origin/', '')
+                        .replaceAll('[^a-zA-Z0-9_.-]', '-')
+                    env.IMAGE = "${DOCKER_IMAGE_NAME}:${branchTag}-${BUILD_NUMBER}"
 
-                withCredentials([file(credentialsId: 'kubeconfig', variable: 'KUBECONFIG_FILE')]) {
-                    sh """
-                    set -eux
-                    export KUBECONFIG="$KUBECONFIG_FILE"
+                    withCredentials([file(credentialsId: 'kubeconfig', variable: 'KUBECONFIG_FILE')]) {
+                        sh """
+                          set -eux
+                          export KUBECONFIG="$KUBECONFIG_FILE"
 
-                    # Canary rollout (1 pod or whatever your canary manifest sets)
-                    sed "s|REPLACE_IMAGE|${IMAGE}|g" train-schedule-kube-canary.yml | kubectl apply -f -
-
-                    # Full production rollout
-                    sed "s|REPLACE_IMAGE|${IMAGE}|g" train-schedule-kube.yml | kubectl apply -f -
-
-                    # Optional visibility
-                    kubectl get deploy -l app=train-schedule -o wide
-                    """
+                          # Canary rollout (1 pod or whatever your canary manifest sets)
+                          sed "s|REPLACE_IMAGE|${IMAGE}|g" train-schedule-kube-canary.yml | kubectl apply -f -
+  
+                          # Full production rollout
+                          sed "s|REPLACE_IMAGE|${IMAGE}|g" train-schedule-kube.yml | kubectl apply -f -
+    
+                          # Optional visibility
+                          kubectl get deploy -l app=train-schedule -o wide
+                        """
+                    }
                 }
             }
-        }
+        }    
     }
 }
