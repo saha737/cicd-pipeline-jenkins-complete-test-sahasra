@@ -88,39 +88,34 @@ pipeline {
                 expression {
                 def b1 = (env.BRANCH_NAME ?: '')
                 def b2 = (env.GIT_BRANCH ?: '')
-                return (b1 == 'master' || b1 == 'main' ||
-                        b2 == 'master' || b2 == 'main' ||
-                        b2.endsWith('/master') || b2.endsWith('/main'))
+                (b1 == 'master' || b1 == 'main' ||
+                b2 == 'master' || b2 == 'main' ||
+                b2.endsWith('/master') || b2.endsWith('/main'))
                 }
             }
             steps {
                 input 'Deploy to Production?'
                 milestone(1)
-
                 script {
-                    def branchTag = (env.BRANCH_NAME ?: env.GIT_BRANCH ?: 'master')
-                        .replaceAll('^origin/', '')
-                        .replaceAll('[^a-zA-Z0-9_.-]', '-')
+                def branchTag = (env.BRANCH_NAME ?: env.GIT_BRANCH ?: 'master')
+                    .replaceAll('^origin/', '')
+                    .replaceAll('[^a-zA-Z0-9_.-]', '-')
+                env.IMAGE = "${DOCKER_IMAGE_NAME}:${branchTag}-${BUILD_NUMBER}"
 
-                    env.IMAGE = "${DOCKER_IMAGE_NAME}:${branchTag}-${BUILD_NUMBER}"
+                withCredentials([file(credentialsId: 'kubeconfig', variable: 'KUBECONFIG_FILE')]) {
+                    sh """
+                    set -eux
+                    export KUBECONFIG="$KUBECONFIG_FILE"
 
-                    // Canary 1 replica
-                    withEnv(["IMAGE=${env.IMAGE}", "CANARY_REPLICAS=1"]) {
-                        kubernetesDeploy(
-                            kubeconfigId: 'kubeconfig',
-                            configs: 'train-schedule-kube-canary.yml',
-                            enableConfigSubstitution: true
-                        )
-                    }
+                    # Canary rollout (1 pod or whatever your canary manifest sets)
+                    sed "s|REPLACE_IMAGE|${IMAGE}|g" train-schedule-kube-canary.yml | kubectl apply -f -
 
-                    // Full prod (set your prod replicas/manifest as needed)
-                    withEnv(["IMAGE=${env.IMAGE}", "CANARY_REPLICAS=0"]) {
-                        kubernetesDeploy(
-                            kubeconfigId: 'kubeconfig',
-                            configs: 'train-schedule-kube.yml',
-                            enableConfigSubstitution: true
-                        )
-                    }
+                    # Full production rollout
+                    sed "s|REPLACE_IMAGE|${IMAGE}|g" train-schedule-kube.yml | kubectl apply -f -
+
+                    # Optional visibility
+                    kubectl get deploy -l app=train-schedule -o wide
+                    """
                 }
             }
         }
